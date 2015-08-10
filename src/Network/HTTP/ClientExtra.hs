@@ -53,9 +53,11 @@ methodBSL manager m j url extraQuery extraHeaders reqBody = do
               rh = responseHeaders rb'
           rb <- BSL.fromChunks <$> brConsume (responseBody rb')
           return $ case HS.statusCode (responseStatus rb') of
-              200 -> Right (rb, cj, rh)
-              s   -> Left  (rb, s )
+              200 -> Right (rb, cj, rh, 200)
+              201 -> Right (rb, cj, rh, 201)
+              202 -> Right (rb, cj, rh, 202)
+              s   -> Left  (rb, cj, rh, s )
           --  Status ResponseHeaders CookieJar
 
 methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m) => (DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, Int) (Maybe a, CookieJar, HH.ResponseHeaders))
-methodJSON a b c d e f g = fmap (\(a1,b1,c1) -> (DA.decode (trace (show a1) a1),b1,c1)) <$> methodBSL a b c d e f g
+methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode (trace (show a1) a1),b1,c1,d1)) <$> methodBSL a b c d e f g
