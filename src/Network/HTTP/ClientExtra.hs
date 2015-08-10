@@ -36,7 +36,7 @@ import Debug.Trace
 
 import qualified Data.ByteString.Lazy as BSL
 
-methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, Int) (BSL.ByteString, CookieJar, HH.ResponseHeaders))
+methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int))
 methodBSL manager m j url extraQuery extraHeaders reqBody = do
    initReq <- parseUrl url
    (bb,eh) <- buildBody reqBody
@@ -59,5 +59,5 @@ methodBSL manager m j url extraQuery extraHeaders reqBody = do
               s   -> Left  (rb, cj, rh, s )
           --  Status ResponseHeaders CookieJar
 
-methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m) => (DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, Int) (Maybe a, CookieJar, HH.ResponseHeaders))
+methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m) => (DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (Maybe a, CookieJar, HH.ResponseHeaders, Int))
 methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode (trace (show a1) a1),b1,c1,d1)) <$> methodBSL a b c d e f g
