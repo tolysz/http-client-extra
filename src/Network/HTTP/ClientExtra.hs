@@ -12,13 +12,15 @@ module Network.HTTP.ClientExtra
  , methodJSON
  , fromQueryE
  , fromQueryE'
+ , EResp
+ , Method
  ) where
 
 import Network.HTTP.Client
  
 import Network.HTTP.ClientExtra.Multipart()
 import Network.HTTP.ClientExtra.Types
-import Network.HTTP.Types.Method (Method)
+import Network.HTTP.Types.Method (Method(..))
 import qualified Network.HTTP.Types.Header as HH
 import qualified Network.HTTP.Types.Status as HS
 
@@ -36,7 +38,10 @@ import Prelude
 
 import qualified Data.ByteString.Lazy as BSL
 
-methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int))
+
+type EResp k = (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (k, CookieJar, HH.ResponseHeaders, Int))
+
+methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp BSL.ByteString)
 methodBSL manager m j url extraQuery extraHeaders reqBody = do
    initReq <- parseUrl url
    (bb,eh) <- buildBody reqBody
@@ -59,6 +64,6 @@ methodBSL manager m j url extraQuery extraHeaders reqBody = do
               s   -> Left  (rb, cj, rh, s )
           --  Status ResponseHeaders CookieJar
 
-methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m) => (DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (Maybe a, CookieJar, HH.ResponseHeaders, Int))
+methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m) => (DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp (Maybe a)
 -- methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode (trace (show a1) a1),b1,c1,d1)) <$> methodBSL a b c d e f g
 methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode a1,b1,c1,d1)) <$> methodBSL a b c d e f g
