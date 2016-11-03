@@ -39,7 +39,7 @@ import Prelude
 import qualified Data.ByteString.Lazy as BSL
 
 
-type EResp k = (Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (k, CookieJar, HH.ResponseHeaders, Int))
+type EResp k = Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (k, CookieJar, HH.ResponseHeaders, Int)
 
 methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp BSL.ByteString)
 methodBSL manager m j url extraQuery extraHeaders reqBody = do
