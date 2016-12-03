@@ -1,4 +1,4 @@
-{-# Language OverloadedStrings
+{-# Language OverloadedStrings, LambdaCase
            , ExistentialQuantification #-}
 
 module Network.HTTP.ClientExtra
@@ -37,6 +37,7 @@ import Prelude
 -- import Debug.Trace
 
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Char8 as BSL8
 
 
 type EResp k = Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (k, CookieJar, HH.ResponseHeaders, Int)
@@ -64,6 +65,9 @@ methodBSL manager m j url extraQuery extraHeaders reqBody = do
               s   -> Left  (rb, cj, rh, s )
           --  Status ResponseHeaders CookieJar
 
-methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m, DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp (Maybe a))
--- methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode (trace (show a1) a1),b1,c1,d1)) <$> methodBSL a b c d e f g
-methodJSON a b c d e f g = fmap (\(a1,b1,c1,d1) -> (DA.decode a1,b1,c1,d1)) <$> methodBSL a b c d e f g
+methodJSON :: (MonadIO m, ContentEncoder m b, MonadThrow m, Functor m, DA.FromJSON a) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp a)
+methodJSON a b c d e f g = methodBSL a b c d e f g >>= return . \case
+     Left  err             -> Left err
+     Right r@(a1,b1,c1,d1) -> case DA.eitherDecode a1 of
+                    Left _err -> Left r
+                    Right v1  -> Right (v1,b1,c1,d1)
