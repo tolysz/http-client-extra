@@ -44,7 +44,7 @@ type EResp k = Either (BSL.ByteString, CookieJar, HH.ResponseHeaders, Int) (k, C
 
 methodBSL :: (MonadIO m, ContentEncoder m b, MonadThrow m) => Manager -> Method -> Maybe CookieJar -> String -> QueryE -> RequestHeadersE -> b -> m (EResp BSL.ByteString)
 methodBSL manager m j url extraQuery extraHeaders reqBody = do
-   initReq <- parseUrl url
+   initReq <- parseUrlThrow url
    (bb,eh) <- buildBody reqBody
    let req = initReq
               { method = m
@@ -52,7 +52,7 @@ methodBSL manager m j url extraQuery extraHeaders reqBody = do
               , queryString = fromQueryE . (<> extraQuery) . toQueryE . queryString $ initReq
               , requestBody = bb
               , cookieJar=j
-              , checkStatus = \_ _ _ ->  Nothing -- cc (checkStatus initReq)
+--              , checkStatus = \_ _ _ ->  Nothing -- cc (checkStatus initReq)
               }
    liftIO $ withResponse req manager $ \rb' -> do
           let cj = responseCookieJar rb'
