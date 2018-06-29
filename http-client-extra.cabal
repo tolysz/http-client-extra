@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                http-client-extra
-version:             0.1.2.0
+version:             0.1.3.0
 synopsis:            wrapper for http-client exposing cookies
 description:         wrapper for http-client exposing cookies
 license:             BSD3

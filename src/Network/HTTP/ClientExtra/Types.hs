@@ -1,7 +1,8 @@
 {-# Language OverloadedStrings
            , ExistentialQuantification
            , MultiParamTypeClasses
-           , FlexibleInstances 
+           , FlexibleInstances
+           , CPP
   #-}
 
 module Network.HTTP.ClientExtra.Types where
@@ -18,7 +19,14 @@ import Control.Arrow ((***))
 
 import qualified Data.Aeson as DA
 import Data.Text
-import Data.Monoid
+
+#if !(MIN_VERSION_base(4,8,0))
+import Data.Monoid (Monoid(..))
+#endif
+#if !(MIN_VERSION_base(4,11,0))
+import Data.Semigroup (Semigroup(..))
+#endif
+
 import Data.Default
 import qualified Data.ByteString.Base64.Lazy as B64
 
@@ -42,9 +50,11 @@ unRequestHeaders (RequestHeadersE a)= Prelude.map ( (mk . DTE.encodeUtf8) *** DT
 instance Default RequestHeadersE where
  def = RequestHeadersE []
 
+instance Semigroup RequestHeadersE where
+  a@(RequestHeadersE _) <> (RequestHeadersE []) = a
+  (RequestHeadersE a) <> (RequestHeadersE ((bh,bc):bs)) = RequestHeadersE ((bh,bc) : Prelude.filter (\(x, _) -> x /= bh) a) `mappend` RequestHeadersE bs
+
 instance Monoid RequestHeadersE where
-  mappend a@(RequestHeadersE _) (RequestHeadersE []) = a
-  mappend (RequestHeadersE a) (RequestHeadersE ((bh,bc):bs)) = RequestHeadersE ((bh,bc) : Prelude.filter (\(x, _) -> x /= bh) a) `mappend` RequestHeadersE bs
   mempty = def
 
 class ToQueryE a where
@@ -52,8 +62,12 @@ class ToQueryE a where
 
 instance Default QueryE where
  def = QueryE []
+
+instance Semigroup QueryE where
+ (QueryE a) <> (QueryE b) = QueryE (a ++ b)
+
 instance Monoid QueryE where
- (QueryE a) `mappend` (QueryE b) = QueryE (a ++ b)
+
  mempty = def
 
 instance ToQueryE BS.ByteString where
